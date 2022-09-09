@@ -3,6 +3,7 @@
 
 #include <netinet/ip_icmp.h>
 #define COMMAND_SIZE 1024
+#define MAX_DATA_SIZE 1472
 
 void c2_init_n_call(char *interface_to_bind);
 int create_socket(char *inteface_to_bind);
