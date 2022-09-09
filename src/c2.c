@@ -110,7 +110,7 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
 char *parse_data_section(char *packet) {
     // get the data section (ignoring the IP & ICMP headers )
     char *data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-    printf("[DEBUG] data section size is: %ld\n", strlen(data));
+    
     data[strlen(data)] = '\0';
 
     return data;
