@@ -52,10 +52,10 @@ unsigned short cksum(unsigned short *addr, int len) {
 
 // get the input and return it's buffer
 char *get_command(void) {
-    char *temp_buffer = (char *) malloc(COMMAND_SIZE);
+    char *temp_buffer = (char *) malloc(BUFFER_SIZE);
     char *buffer;   
 
-    fgets(temp_buffer, COMMAND_SIZE, stdin);
+    fgets(temp_buffer, BUFFER_SIZE, stdin);
     buffer = calloc(strlen(temp_buffer), 1);
 
     strncpy(buffer, temp_buffer, strlen(temp_buffer));
@@ -68,6 +68,7 @@ char *get_command(void) {
 // read from the socket and write the data in a buffer
 int read_from_socket(int sockfd, char *buffer, int size) {
     int bytes_num = read(sockfd, buffer, size);
+
     if (bytes_num < 0) {
         return -1;
     }
@@ -144,13 +145,14 @@ void interact(int sockfd) {
     char *input; // holds the input buffer
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
     int bytes;
-    int packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + MAX_DATA_SIZE;
+    int packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
 
-    input = (char *) malloc(COMMAND_SIZE);
+    input = (char *) malloc(BUFFER_SIZE);
     packet = (char *) malloc(packet_size);
 
     if (input == NULL || packet == NULL) {
         fprintf(stderr, "Error: Cannot allocate memory\n");
+        free(input);
         free(packet);
         close(sockfd);
         exit(EXIT_FAILURE);
@@ -176,19 +178,17 @@ void interact(int sockfd) {
 
             data = parse_data_section(packet);
 
-            // get user input
             input = get_command();
 
             append_to_data_section(icmp, data, input);
+
+            data = NULL;
 
             bytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
             if (bytes < 0) {
                 perror("sendto()");
                 break;
             }
-
-            // clean up the packet buffer for the next usage
-            memset(packet, 0, packet_size);
 
             free(input);
             break;
@@ -211,10 +211,11 @@ void interact(int sockfd) {
 
             write(1, data, strlen(data));
 
-            // get user input
             input = get_command();
 
             append_to_data_section(icmp, data, input);
+
+            data = NULL;
 
             bytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
             if (bytes < 0) {
