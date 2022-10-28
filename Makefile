@@ -8,7 +8,7 @@ all: icmp-c2 icmp-implant
 
 icmp-c2: obj/icmp-c2.o obj/c2.o
 	$(CC) $(CFLAGS) -static $(OBJDIR)/icmp-c2.o $(OBJDIR)/c2.o -o $(OUTDIR)/icmp-c2
-	# upx $(OUTDIR)/icmp-implant
+	# upx $(OUTDIR)/icmp-c2
 	sudo setcap cap_net_raw=ep $(OUTDIR)/icmp-c2
 
 icmp-implant: obj/icmp-implant.o obj/implant.o
