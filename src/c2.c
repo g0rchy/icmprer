@@ -14,14 +14,14 @@ int create_socket(char *interface_to_bind) {
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
         perror("socket()");
-        exit(-1);
+        exit(1);
     }
 
     // bind it to the interface if specified
     if (interface_to_bind != NULL) {
         if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface_to_bind, strlen(interface_to_bind)) < 0) {
             perror("setsockopt()");
-            exit(-1);
+            exit(1);
         }
     }
 

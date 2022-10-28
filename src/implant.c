@@ -14,7 +14,7 @@ int create_socket(void) {
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
         perror("socket()");
-        exit(-1);
+        exit(1);
     }
 
     return sockfd;
