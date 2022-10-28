@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
-//#include <linux/ip.h>
 #include "../include/implant.h"
 
 // creates a raw ICMP socket and binds it
