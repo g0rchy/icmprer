@@ -102,7 +102,7 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
     return addr;
 }
 
-/* TODO: return as raw bytes instead of chars for tty interaction */
+
 // parse the data section
 char *parse_data_section(char *packet) {
     // get the data section (ignoring the IP & ICMP headers )
@@ -121,7 +121,7 @@ void prep_icmp_headers(struct icmphdr *icmp, char *data, uint16_t checksum) {
     icmp->un.echo.id = 9001;
 }
 
-/* TODO: return as raw bytes instead of chars for tty interaction */
+
 // reuse the ICMP packet to append our input in the data section
 void append_to_data_section(struct icmphdr *icmp, char *data, char *input) {
     memcpy((char *) data, input, strlen(input));
