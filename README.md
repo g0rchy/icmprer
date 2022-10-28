@@ -1,7 +1,7 @@
 # Description
 An ICMP-based shell written in C, nothing fancy, made it just for fun and to poke at some C/*nix programming concepts.
 
-# Requirements
+# Optional Requirement
 - UPX
 
 # Usage  
