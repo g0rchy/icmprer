@@ -1,8 +1,6 @@
 #ifndef implant_H
 #define implant_H
 
-//#include <linux/icmp.h>
-//#include <stdint.h>
 #include <netinet/ip_icmp.h>
 #define BUFFER_SIZE 1024
 
