@@ -4,7 +4,7 @@
 #include "../include/c2.h"
 
 void print_usage(char *binpath) {
-    printf("Usage: %s -i [INTERFACE]\n  -i\tinterface to listen on\n  -h\tdisplay help menu\n", binpath);
+    printf("Usage: %s -i [INTERFACE]\n\n  -i, --interface\tinterface to listen on\n  -h, --help\t\tdisplay help menu\n", binpath);
 }
 
 int main(int argc, char **argv) {
@@ -28,13 +28,11 @@ int main(int argc, char **argv) {
                 c2_init_n_call(optarg);
                 break;
             case '?': // invalid option, proceed to print the usage menu
-                print_usage(argv[0]);
-                break;
             case 'h':
                 print_usage(argv[0]);
                 break;
             default: // what the hell you passed in?
-                exit(-1);
+                return 1;
        }
     }
     return 0;
