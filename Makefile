@@ -16,18 +16,17 @@ icmp-implant: obj/icmp-implant.o obj/implant.o
 	# upx $(OUTDIR)/icmp-implant
 	sudo setcap cap_net_raw=ep $(OUTDIR)/icmp-implant
 
-obj/icmp-implant.o: src/icmp-implant.c
+obj/icmp-implant.o:
 	$(CC) $(CFLAGS) -c $(SRCDIR)/icmp-implant.c -o $(OBJDIR)/icmp-implant.o
 
-obj/implant.o: src/implant.c
+obj/implant.o:
 	$(CC) $(CFLAGS) -c $(SRCDIR)/implant.c -o $(OBJDIR)/implant.o
 	
-obj/icmp-c2.o: src/icmp-c2.c
+obj/icmp-c2.o:
 	$(CC) $(CFLAGS) -c $(SRCDIR)/icmp-c2.c -o $(OBJDIR)/icmp-c2.o
 
-obj/c2.o: src/c2.c
+obj/c2.o:
 	$(CC) $(CFLAGS) -c $(SRCDIR)/c2.c -o $(OBJDIR)/c2.o
-
 
 clean:
 	rm -f $(OBJDIR)/* $(OUTDIR)/*
