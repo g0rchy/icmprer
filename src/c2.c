@@ -53,16 +53,10 @@ unsigned short cksum(unsigned short *addr, int len) {
 }
 
 // get the input and return it's buffer
-char *get_command(void) {
-    char *temp_buffer = (char *) malloc(BUFFER_SIZE);
-    char *buffer;   
+char *get_command(char *buffer) {
 
-    fgets(temp_buffer, BUFFER_SIZE, stdin);
-    buffer = calloc(strlen(temp_buffer), 1);
-
-    strncpy(buffer, temp_buffer, strlen(temp_buffer));
-
-    free(temp_buffer);
+    write(1, "> ", 2);
+    fgets(buffer, BUFFER_SIZE, stdin);
 
     return buffer;
 }
@@ -180,7 +174,7 @@ void interact(int sockfd) {
 
             data = parse_data_section(packet);
 
-            input = get_command();
+            get_command(input);
 
             append_to_data_section(icmp, data, input);
 
@@ -192,7 +186,8 @@ void interact(int sockfd) {
                 break;
             }
 
-            free(input);
+            memset(input, 0, strlen(input));
+            memset(packet, 0, packet_size);
             break;
         }
     }
@@ -213,7 +208,7 @@ void interact(int sockfd) {
 
             write(1, data, strlen(data));
 
-            input = get_command();
+            get_command(input);
 
             append_to_data_section(icmp, data, input);
 
@@ -227,8 +222,7 @@ void interact(int sockfd) {
 
             // clean up the packet buffer for the next usage
             memset(packet, 0, packet_size);
-
-            free(input);
+            memset(input, 0, strlen(input));
         }
     }
     

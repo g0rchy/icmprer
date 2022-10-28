@@ -9,7 +9,7 @@ int create_socket(char *inteface_to_bind);
 int read_from_socket(int sockfd, char *buffer,int size);
 void interact(int sockfd);
 void print_connection_succeed(char *src_ip);
-char *get_command(void);
+char *get_command(char *buffer);
 int check_magic_byte(struct icmphdr *icmp);
 struct sockaddr_in prep_ip_headers(struct iphdr *ip);
 char *parse_data_section(char *packet);
