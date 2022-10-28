@@ -105,7 +105,7 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
 
 // parse the data section
 char *parse_data_section(char *packet) {
-    // get the data section (ignoring the IP & ICMP headers )
+    // get the data section (ignoring the IP & ICMP headers)
     char *data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
     
     data[strlen(data)] = '\0';
@@ -115,7 +115,6 @@ char *parse_data_section(char *packet) {
 
 // prep'ing the ICMP headers & setting up the checksum
 void prep_icmp_headers(struct icmphdr *icmp, char *data, uint16_t checksum) {
-    icmp->checksum = 0; // needs to be set before calculating for some weird reason
     icmp->checksum = checksum;
     icmp->type = 8;
     icmp->un.echo.id = 9001;
