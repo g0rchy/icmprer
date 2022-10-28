@@ -13,4 +13,3 @@ Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines
 
 # Todo
 - Add some stealthness (e.g encrypted communication, default packet size with fragementation, obfuscated process name, random ICMP id numbers, delays...).
-- Change the way commands are executed from `popen()` to a forward shell for tty interaction.
