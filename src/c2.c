@@ -41,7 +41,7 @@ unsigned short cksum(unsigned short *addr, int len) {
     }
 
     if (nleft == 1) {
-      *(unsigned unsigned char *)(&answer) = *(unsigned unsigned char *)w;
+      *(unsigned char *)(&answer) = *(unsigned char *)w;
       sum += answer;
     }
 
@@ -54,13 +54,13 @@ unsigned short cksum(unsigned short *addr, int len) {
 
 #define N 256   // 2^8
 
-void swap(unsigned unsigned char *a, unsigned unsigned char *b) {
+void swap(unsigned char *a, unsigned char *b) {
     int tmp = *a;
     *a = *b;
     *b = tmp;
 }
 
-int KSA(unsigned char *key, unsigned unsigned char *S) {
+int KSA(unsigned char *key, unsigned char *S) {
 
     int len = strlen(key);
     int j = 0;
@@ -77,7 +77,7 @@ int KSA(unsigned char *key, unsigned unsigned char *S) {
     return 0;
 }
 
-int PRGA(unsigned unsigned char *S, unsigned char *plaintext, unsigned unsigned char *ciphertext) {
+int PRGA(unsigned char *S, unsigned char *plaintext, unsigned char *ciphertext) {
     int i = 0;
     int j = 0;
 
@@ -95,7 +95,7 @@ int PRGA(unsigned unsigned char *S, unsigned char *plaintext, unsigned unsigned 
     return 0;
 }
 
-int RC4(unsigned char *key, unsigned char *plaintext, unsigned unsigned char *ciphertext) {
+int RC4(unsigned char *key, unsigned char *plaintext, unsigned char *ciphertext) {
     unsigned char S[N];
     KSA(key, S);
 
