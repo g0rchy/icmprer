@@ -4,7 +4,7 @@
 #include <netinet/ip_icmp.h>
 #define BUFFER_SIZE 1024
 
-void implant_init_n_call(unsigned char *dest_ip);
+void implant_init_n_call(char *dest_ip);
 int read_from_socket(int sockfd, unsigned char *buffer,int size);
 int create_socket(void);
 int check_magic_byte(struct icmphdr *icmp);
