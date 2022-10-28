@@ -3,11 +3,11 @@
 #include <getopt.h>
 #include "../include/c2.h"
 
-void print_usage(char *binpath) {
+void print_usage(unsigned char *binpath) {
     printf("Usage: %s -i [INTERFACE]\n\n  -i, --interface\tinterface to listen on\n  -h, --help\t\tdisplay help menu\n", binpath);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, unsigned char **argv) {
     int opt, do_parse_args = 1;
     const char* short_opts = "hi:";
     const struct option large_opts[] = {

