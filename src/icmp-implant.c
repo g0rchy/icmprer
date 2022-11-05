@@ -13,7 +13,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char *target = malloc(strlen(argv[1]) + 1);
+    char target[strlen(argv[1])];
+    strcpy(target, argv[1]);
 
     // remove implant upon execution
     unlink(argv[0]);
