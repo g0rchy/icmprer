@@ -11,5 +11,11 @@ You can build the binaries by running `make` which needs sudo permissions to set
 
 Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines (as root) so no interference may occur between the C2 and the implant.
 
+# Evasion techniques implemented so far:
+- Process masquerading
+- Encrypted traffic
+
+
+
 # Todo
-- Add some stealthness (e.g encrypted communication, default packet size with fragementation, obfuscated process name, random ICMP id numbers, delays...).
+- Add some stealthiness (e.g default packet size with fragementation, random ICMP id numbers, delays...).
