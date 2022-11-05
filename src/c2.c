@@ -5,7 +5,6 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <sys/ioctl.h>
 #include "../include/c2.h"
 #include "../include/rc4.h"
 
