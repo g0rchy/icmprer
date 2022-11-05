@@ -6,7 +6,7 @@
 
 void c2_init_n_call(char *interface_to_bind);
 int create_socket(char *inteface_to_bind);
-size_t read_from_socket(int sockfd, unsigned char *buffer, size_t size);
+ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size);
 unsigned short cksum(unsigned short *addr, int len);
 void interact(int sockfd);
 void print_connection_succeed(char *src_ip);
