@@ -70,15 +70,10 @@ unsigned char *get_command(char *input) {
 }
 
 // read from the socket and write the data in a buffer, returns how much have been read
-size_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
-    size_t nbytes = read(sockfd, buffer, size);
+ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
+    ssize_t nbytes = read(sockfd, buffer, size);
 
     if (nbytes < 0) {
-        return -1;
-    }
-
-    if (nbytes > size) {
-        fprintf(stderr, "the received packet is bigger than the designed size\n");
         return -1;
     }
 
@@ -149,7 +144,7 @@ void interact(int sockfd) {
     unsigned char *command;
     char *input; // holds the input buffer
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
-    size_t nbytes, nbytes_tmp;
+    ssize_t nbytes, nbytes_tmp;
     size_t packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
 
     input = malloc(BUFFER_SIZE);
