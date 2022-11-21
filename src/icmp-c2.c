@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
 #include "../include/c2.h"
 
 void print_usage(char *binpath) {

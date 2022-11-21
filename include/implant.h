@@ -2,6 +2,18 @@
 #define implant_H
 
 #include <netinet/ip_icmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/prctl.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <openssl/aes.h>
+
 #define BUFFER_SIZE 1472
 
 void implant_init_n_call(char *dest_ip);

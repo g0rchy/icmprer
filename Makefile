@@ -29,3 +29,9 @@ obj/c2.o:
 
 clean:
 	rm -f $(OBJDIR)/* $(OUTDIR)/*
+
+fclean:
+	clean
+
+re:
+	fclean all
