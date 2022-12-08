@@ -10,6 +10,9 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <openssl/aes.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 
 #define BUFFER_SIZE 1472
 
