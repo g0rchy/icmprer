@@ -1,6 +1,6 @@
 #include "../include/rc4.h"
 
-void RC4(unsigned char* data, long data_len, unsigned char* key, long key_len, unsigned char* result) {
+void rc4(unsigned char* data, long data_len, unsigned char* key, long key_len, unsigned char* result) {
     unsigned char T[256];
     unsigned char S[256];
     unsigned char tmp; // to be used in swaping

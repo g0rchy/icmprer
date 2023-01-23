@@ -59,7 +59,7 @@ unsigned char *get_command(char *input) {
     fgets(input, BUFFER_SIZE, stdin);
 
     // encrypt the command
-    RC4((unsigned char *) input, strlen(input), (unsigned char *) KEY, KEY_LENGTH, cipher_text);
+    rc4((unsigned char *) input, strlen(input), (unsigned char *) KEY, KEY_LENGTH, cipher_text);
 
     return cipher_text;
 }
@@ -201,7 +201,7 @@ void interact(int sockfd) {
             data = parse_data_section(packet);
 
             // decrypt the cipher text (command's output)
-            RC4(data, nbytes, (unsigned char *) KEY, KEY_LENGTH, cipher_text);
+            rc4(data, nbytes, (unsigned char *) KEY, KEY_LENGTH, cipher_text);
 
             write(1, cipher_text, nbytes);
 

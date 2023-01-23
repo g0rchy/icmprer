@@ -1,7 +1,6 @@
 #ifndef implant_H
 #define implant_H
 
-#include <netinet/ip_icmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,6 +9,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <openssl/aes.h>
