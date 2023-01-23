@@ -14,7 +14,7 @@ Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines
 # Evasion techniques implemented so far:
 - Process masquerading
 - Encrypted traffic
-- *Rudimentary* environment variables wipe
+- ~~*Rudimentary*~~ environment variables wipe
 - *Rudimentary* anti-debugging
 
 
