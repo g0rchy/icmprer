@@ -4,7 +4,7 @@ An ICMP-based shell written in C, nothing fancy, made it just for fun and to pok
 # Optional Requirement
 - UPX
 
-# Usage  
+# Usage
 You can build the binaries by running `make` which needs sudo permissions to set the `cap_net_raw` capability:
 - `bin/icmp-c2` is the C2 that sends commands to the implant (attacker)
 - `bin/icmp-implant` is the implant which executes commands and sends them back to the C2 (victim)
@@ -14,7 +14,8 @@ Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines
 # Evasion techniques implemented so far:
 - Process masquerading
 - Encrypted traffic
-
+- *Rudimentary* environment variables wipe
+- *Rudimentary* anti-debugging
 
 
 # Todo
