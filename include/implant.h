@@ -12,7 +12,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <openssl/aes.h>
 
 #define BUFFER_SIZE 1472
 

