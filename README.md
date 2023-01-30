@@ -15,8 +15,7 @@ Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines
 - Process masquerading
 - Encrypted traffic
 - ~~*Rudimentary*~~ environment variables wipe
-- *Rudimentary* anti-debugging
-
 
 # Todo
 - Add some stealthiness (e.g default packet size with fragementation, random ICMP id numbers, delays...).
+- Use BPF to filter out packets instead (for better performance).
