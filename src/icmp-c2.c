@@ -1,7 +1,10 @@
+#include <stdio.h>
+#include <getopt.h>
+
 #include "../include/c2.h"
 
 void print_usage(char *binpath) {
-    printf("Usage: %s -i [INTERFACE]\n\n  -i, --interface\tinterface to listen on\n  -h, --help\t\tdisplay help menu\n", binpath);
+    fprintf(stderr, "Usage: %s -i [INTERFACE]\n\n  -i, --interface\tinterface to listen on\n  -h, --help\t\tdisplay help menu\n", binpath);
 }
 
 int main(int argc, char **argv) {
@@ -14,7 +17,7 @@ int main(int argc, char **argv) {
     };
 
     if (argc < 2) {
-        printf("[!] No interface specified, listenning on all interfaces...\n");
+        puts("[!] No interface specified, listenning on all interfaces...");
         c2_init_n_call(NULL);
         do_parse_args = 0;
     }

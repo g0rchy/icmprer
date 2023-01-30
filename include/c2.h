@@ -1,20 +1,13 @@
 #ifndef C2_H
 #define C2_H
 
-#include <netinet/ip_icmp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/socket.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <openssl/aes.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
+#include <linux/ip.h>
+#include <linux/icmp.h>
 
 #define BUFFER_SIZE 1472
+#define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 
 void c2_init_n_call(char *interface_to_bind);
 int create_socket(char *inteface_to_bind);

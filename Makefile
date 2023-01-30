@@ -2,7 +2,7 @@ OUTDIR = ./bin
 SRCDIR = ./src
 OBJDIR = ./obj
 CC = gcc
-CFLAGS = -Wall -Werror -D_FORTIFY_SOURCE=2 -s -lcrypto
+CFLAGS = -Wall -Werror -D_FORTIFY_SOURCE=2 -s
 
 all: icmp-c2 icmp-implant
 
