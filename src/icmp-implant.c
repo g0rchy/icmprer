@@ -39,6 +39,9 @@ int main(int argc, char **argv, char **envp) {
     prctl(PR_SET_MM, PR_SET_MM_ENV_START, &empty, NULL, NULL);
     prctl(PR_SET_MM, PR_SET_MM_ENV_END, &empty, NULL, NULL);
 
+    // change /proc/self/cwd to "/"
+    chdir("/");
+
     close(STDIN_FILENO);
 	close(STDOUT_FILENO);
     close(STDERR_FILENO);
