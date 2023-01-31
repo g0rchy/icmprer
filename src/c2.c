@@ -116,6 +116,7 @@ unsigned char *parse_data_section(unsigned char *packet) {
 
 // prep'ing the ICMP headers & setting up the checksum
 void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
+    icmp->checksum = 0;
     icmp->checksum = checksum;
     icmp->type = 8;
     icmp->un.echo.id = 9001;
