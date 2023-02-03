@@ -1,12 +1,12 @@
-#include "../include/implant.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <linux/icmp.h>
 #include <sys/ptrace.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
+
+#include "../include/implant.h"
 
 int main(int argc, char **argv, char **envp) {
     if (argc < 2) {

