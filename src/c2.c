@@ -58,6 +58,8 @@ unsigned short cksum(unsigned short *addr, int len) {
 unsigned char *get_command(char *input) {
     unsigned char *cipher_text = (unsigned char *) malloc(BUFFER_SIZE);
 
+    CHECK_ALLOC(cipher_text);
+
     write(1, "> ", 2);
     fgets(input, BUFFER_SIZE, stdin);
 
@@ -145,6 +147,8 @@ void interact(int sockfd) {
     ssize_t nbytes, nbytes_tmp;
     size_t packet_size = sizeof(struct iphdr *) + sizeof(struct icmphdr *) + BUFFER_SIZE;
     int connected = 0;
+
+    CHECK_ALLOC(cipher_text);
 
     input = malloc(BUFFER_SIZE);
     CHECK_ALLOC(input);
