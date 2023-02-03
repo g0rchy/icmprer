@@ -43,6 +43,8 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
         return 0;
     }
 
+    memset(command, '\0', strlen(command));
+
     fread(temp_buffer, BUFFER_SIZE, 1, ptr);
     temp_buffer_size = strlen((char *) temp_buffer);
 
