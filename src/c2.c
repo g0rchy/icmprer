@@ -6,9 +6,6 @@
 #include "../include/c2.h"
 #include "../include/utils.h"
 
-#define KEY "thisisapassword"
-#define KEY_LENGTH 15
-
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
     int sockfd;

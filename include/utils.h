@@ -5,6 +5,13 @@
 #include <arpa/inet.h>
 #include <netinet/ip_icmp.h>
 
+#define KEY "thisisapassword"
+#define KEY_LENGTH 15
+
+#ifndef RAND_ID
+#define RAND_ID 6969
+#endif
+
 #define BUFFER_SIZE 1472
 #define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
 

