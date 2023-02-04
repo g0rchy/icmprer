@@ -9,10 +9,6 @@
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
     int sockfd;
-    struct timeval tv;
-
-    tv.tv_sec = 5;
-    tv.tv_usec = 0;
 
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
@@ -26,12 +22,6 @@ int create_socket(char *interface_to_bind) {
             perror("setsockopt()");
             exit(1);
         }
-    }
-
-
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        perror("setsockopt()");
-        exit(1);
     }
 
     return sockfd;
