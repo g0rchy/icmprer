@@ -33,14 +33,19 @@ int create_socket(char *interface_to_bind) {
 // get the input and return it's buffer
 unsigned char *get_command(char *input) {
     unsigned char *cipher_text = (unsigned char *) malloc(BUFFER_SIZE);
+    size_t input_size;
 
     CHECK_ALLOC(cipher_text);
 
     write(1, "> ", 2);
     fgets(input, BUFFER_SIZE, stdin);
 
+    input_size = strlen(input);
+
+    input[input_size - 1] = '\0';
+
     // encrypt the command
-    rc4((unsigned char *) input, strlen(input), (unsigned char *) KEY, KEY_LENGTH, cipher_text);
+    rc4((unsigned char *) input, input_size, (unsigned char *) KEY, KEY_LENGTH, cipher_text);
 
     return cipher_text;
 }
