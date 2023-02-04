@@ -105,9 +105,9 @@ unsigned char *parse_data_section(unsigned char *packet) {
 }
 
 // prep'ing the ICMP headers & setting up the checksum
-void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
+void prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
     icmp->checksum = 0;
-    icmp->checksum = checksum;
+    icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
     icmp->type = 8;
     icmp->un.echo.id = 9001;
 }
@@ -116,7 +116,5 @@ void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum) {
 void append_to_data_section(struct icmphdr *icmp, unsigned char *input) {
     memcpy((unsigned char *) icmp + sizeof(struct icmphdr), input, strlen((char *) input));
 
-    uint16_t checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + strlen((char *) input));
-
-    prep_icmp_headers(icmp, checksum);
+    prep_icmp_headers(icmp, strlen((char *) input));
 }

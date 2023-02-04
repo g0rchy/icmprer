@@ -151,6 +151,8 @@ void interact(int sockfd, char *dest_ip) {
             // put the output in the data section of the ICMP packet
             memcpy(data, output, output_size);
 
+            prep_icmp_headers(icmp, output_size);
+
             // send it
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + output_size, 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {

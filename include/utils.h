@@ -14,8 +14,8 @@ void rc4(unsigned char* data, long data_len, unsigned char* key, long key_len, u
 int check_magic_byte(struct icmphdr *icmp);
 unsigned short cksum(unsigned short *addr, int len);
 struct sockaddr_in prep_ip_headers(struct iphdr *ip);
-void prep_icmp_headers(struct icmphdr *icmp, uint16_t checksum);
-struct sockaddr_in prep_ip_headers(struct iphdr *ip);
+void prep_icmp_headers(struct icmphdr *icmp, size_t size);
+unsigned char *parse_data_section(unsigned char *packet);
 void append_to_data_section(struct icmphdr *icmp, unsigned char *input);
 
 #endif

