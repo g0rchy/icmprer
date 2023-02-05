@@ -9,19 +9,27 @@
 // creates a raw ICMP socket and binds it
 int create_socket(char *interface_to_bind) {
     int sockfd;
+    struct icmp_filter filter;
 
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
         perror("socket()");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // bind it to the interface if specified
     if (interface_to_bind != NULL) {
-        if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface_to_bind, strlen(interface_to_bind)) < 0) {
+        if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, interface_to_bind, strlen(interface_to_bind) + 1) < 0) {
             perror("setsockopt()");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
+    }
+
+    // attach a filter to the socket to only catch ICMP_ECHO requests only
+    filter.data = ~(1 << ICMP_ECHO);
+    if (setsockopt(sockfd, SOL_RAW, ICMP_FILTER, &filter, sizeof(filter)) < 0) {
+        perror("setsockopt()");
+        exit(EXIT_FAILURE);
     }
 
     return sockfd;
