@@ -80,7 +80,7 @@ void interact(int sockfd) {
     input = malloc(BUFFER_SIZE);
     CHECK_ALLOC(input);
 
-    packet = (unsigned char *) malloc(sizeof(unsigned char) * packet_size);
+    packet = (unsigned char *) malloc(packet_size);
     CHECK_ALLOC(packet);
 
     puts("[+] Waiting for connections...");

