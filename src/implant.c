@@ -9,9 +9,17 @@
 // creates a raw ICMP socket and binds it
 int create_socket(void) {
     int sockfd;
+    struct icmp_filter filter;
 
     // create the raw ICMP socket
     if ((sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
+        exit(EXIT_FAILURE);
+    }
+
+    // attach a filter to the socket to only catch ICMP_ECHO requests only
+    filter.data = ~(1 << ICMP_ECHOREPLY);
+    if (setsockopt(sockfd, SOL_RAW, ICMP_FILTER, &filter, sizeof(filter)) < 0) {
+        perror("setsockopt()");
         exit(EXIT_FAILURE);
     }
 

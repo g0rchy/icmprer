@@ -4,6 +4,14 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/ip_icmp.h>
+#include <linux/types.h>
+
+#ifndef ICMP_FILTER
+#define ICMP_FILTER	1
+struct icmp_filter {
+	__u32 data;
+};
+#endif
 
 #define KEY "thisisapassword"
 #define KEY_LENGTH 15

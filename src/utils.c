@@ -68,13 +68,7 @@ unsigned short cksum(unsigned short *addr, int len) {
 
 // reads from the socket and put it in the buffer
 ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size) {
-    ssize_t nbytes = read(sockfd, buffer, size);
-
-    if (nbytes < 0) {
-        return -1;
-    }
-
-    return nbytes;
+    return read(sockfd, buffer, size);
 }
 
 // check if we got an actual connection from our implant
@@ -98,9 +92,7 @@ struct sockaddr_in prep_ip_headers(struct iphdr *ip) {
 // parse the data section
 unsigned char *parse_data_section(unsigned char *packet) {
     // get the data section (ignoring the IP & ICMP headers)
-    unsigned char *data = (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
-
-    return data;
+    return (unsigned char *) (packet + sizeof(struct iphdr) + sizeof(struct icmphdr));
 }
 
 // prep'ing the ICMP headers & setting up the checksum for c2

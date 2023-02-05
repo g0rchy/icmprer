@@ -2,14 +2,6 @@
 #define C2_H
 #include <stdint.h>
 #include <netinet/ip_icmp.h>
-#include <linux/types.h>
-
-#ifndef ICMP_FILTER
-#define ICMP_FILTER	1
-struct icmp_filter {
-	__u32 data;
-};
-#endif
 
 void c2_init_n_call(char *interface_to_bind);
 int create_socket(char *inteface_to_bind);
