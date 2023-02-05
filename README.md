@@ -1,8 +1,5 @@
 # Description
-An ICMP-based shell written in C, nothing fancy, made it just for fun and to poke at some C/*nix programming concepts.
-
-# Optional Requirement
-- UPX
+An ICMP-based reverse shell written in C, nothing fancy, made it just for fun and to poke at some C/*nix programming concepts.
 
 # Usage
 You can build the binaries by running `make` which needs sudo permissions to set the `cap_net_raw` capability:
@@ -17,5 +14,5 @@ Don't forget to run `sysctl -w net.ipv4.icmp_echo_ignore_all=1` on both machines
 - ~~*Rudimentary*~~ environment variables wipe
 
 # Todo
-- Add some stealthiness (e.g default packet size with fragementation, random ICMP id numbers, delays...).
+- Add some stealthiness (e.g default packet size with fragementation, delays...).
 - Use BPF to filter out packets instead (for better performance).
