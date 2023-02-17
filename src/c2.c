@@ -45,7 +45,8 @@ unsigned char *get_command(char *input) {
     write(1, "> ", 2);
     if (fgets(input, BUFFER_SIZE, stdin) == NULL) {
         perror("fgets()");
-        return -1;
+        free(cipher_text);
+        return NULL;
     }
 
     input_size = strlen(input);
