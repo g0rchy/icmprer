@@ -21,7 +21,7 @@ struct icmp_filter {
 #endif
 
 #define BUFFER_SIZE 1472
-#define CHECK_ALLOC(x) {if (x == NULL) {fprintf(stderr, "Error: Cannot allocate memory\n"); exit(EXIT_FAILURE);}}
+#define PACKET_SIZE 1488 // IP & ICMP headers == 16 + BUFFER_SIZE
 
 
 ssize_t read_from_socket(int sockfd, unsigned char *buffer, size_t size);
